@@ -49,7 +49,8 @@ fun FactorItem(
         ) {
             Text(
                 text = factor.icon,
-                fontSize = 18.sp
+                fontSize = 18.sp,
+                color= TextTertiary
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(

@@ -1,31 +1,40 @@
 package com.example.bikeweatherforecastapp.data.repository
 
 import android.util.Log
-import com.example.bikeweatherforecastapp.BuildConfig
-import com.example.bikeweatherforecastapp.data.remote.WeatherApiService
+import com.example.bikeweatherforecastapp.data.remote.OpenMeteoGeocodingService
+import com.example.bikeweatherforecastapp.domain.model.CityLocation
 import com.example.bikeweatherforecastapp.domain.model.Coordinates
 import com.example.bikeweatherforecastapp.domain.repository.SearchRepository
 
 class SearchRepositoryImpl(
-    private val apiService: WeatherApiService
-) : SearchRepository{
-    override suspend fun searchCity(city: String): Coordinates? {
+    private val geocodingService: OpenMeteoGeocodingService
+) : SearchRepository {
+    override suspend fun searchCity(city: String): CityLocation? {
         return try {
-            Log.d("SearchRepositoryImpl", "Searching for city: $city")
-            val  response= apiService.getGeoLocation(city=city, apiKey = BuildConfig.API_KEY)
-            Log.d("SearchRepositoryImpl", "Geo API response: $response")
+            Log.d(TAG, "Searching for city: $city")
+            val response = geocodingService.searchCity(name = city)
+            Log.d(TAG, "Geo API response: $response")
 
-            val firstResult= response.firstOrNull()
+            val firstResult = response.results?.firstOrNull()
 
-            firstResult?.let{
-                Coordinates(
-                    lat = it.lat,
-                    lon=it.lon
+            firstResult?.let {
+                Log.d(TAG, "Found: ${it.name}, ${it.country} at ${it.latitude}, ${it.longitude}")
+                CityLocation(
+                    name = it.name,
+                    country = it.country ?: "",
+                    coordinates = Coordinates(
+                        lat = it.latitude,
+                        lon = it.longitude
+                    )
                 )
             }
-        }catch (e: Exception){
-            Log.e("SearchRepositoryImpl", "Error searching city: ${e.message}", e)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error searching city: ${e.message}", e)
             null
         }
+    }
+
+    companion object {
+        private const val TAG = "SearchRepositoryImpl"
     }
 }

@@ -23,6 +23,12 @@ object Utils {
         return dateFormat.format(date)
     }
 
+    fun formatTime(timestamp: Long): String{
+        val date = Date(timestamp * 1000)
+        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+        return timeFormat.format(date)
+    }
+
     fun getScoreColor(score: Int): Color {
         return when{
             score>= 80 -> ScoreExcellent         // Green- Excellent

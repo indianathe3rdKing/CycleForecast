@@ -17,10 +17,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewModelScope
 import com.example.bikeweatherforecastapp.data.local.DataStoreManager
 import com.example.bikeweatherforecastapp.domain.model.BikeRidingScore
-import com.example.bikeweatherforecastapp.domain.model.DailyForecast
-import com.example.bikeweatherforecastapp.domain.model.HourlyForecast
+import com.example.bikeweatherforecastapp.domain.model.Forecast
 import com.example.bikeweatherforecastapp.domain.model.Temperature
-import com.example.bikeweatherforecastapp.domain.model.WeatherResponse
+import com.example.bikeweatherforecastapp.domain.model.WeatherItem
 import com.example.bikeweatherforecastapp.domain.model.WeatherState
 import com.example.bikeweatherforecastapp.domain.usecase.SearchCityUseCase
 import com.google.android.gms.location.Priority
@@ -80,9 +79,11 @@ class WeatherViewModel(
 
     //score
     private val _dailyScores =
-        mutableStateOf<List<Pair<DailyForecast, BikeRidingScore>>>(emptyList())
-    val dailyScores: State<List<Pair<DailyForecast, BikeRidingScore>>> = _dailyScores
-
+        mutableStateOf<List<Pair<Forecast, BikeRidingScore>>>(emptyList())
+    val dailyScores: State<List<Pair<Forecast, BikeRidingScore>>> = _dailyScores
+    private val _hourlyScores =
+    mutableStateOf<List<Pair<Forecast, BikeRidingScore>>>(emptyList())
+    val hourlyScores: State<List<Pair<Forecast, BikeRidingScore>>> = _hourlyScores
     fun updateSelectedDay(selectedDay: Boolean) {
         viewModelScope.launch {
 
@@ -135,13 +136,18 @@ class WeatherViewModel(
     fun searchCity(city: String) {
         Log.d(TAG, "searchCity called with: $city")
         viewModelScope.launch {
-            val coordinates = searchCityUseCase(city)
-            Log.d(TAG, "searchCity result: $coordinates")
+            val cityLocation = searchCityUseCase(city)
+            Log.d(TAG, "searchCity result: $cityLocation")
 
-            coordinates?.let {
-                Log.i(TAG, "Coordinates: ${it.lat}, ${it.lon}")
-                fetchWeatherData(it.lat, it.lon)
-                dataStoreManager.setCity(city)
+            cityLocation?.let {
+                Log.i(TAG, "Found: ${it.name}, ${it.country} at ${it.coordinates.lat}, ${it.coordinates.lon}")
+                fetchWeatherData(
+                    latitude = it.coordinates.lat,
+                    longitude = it.coordinates.lon,
+                    cityName = it.name,
+                    country = it.country
+                )
+                dataStoreManager.setCity(it.name)
                 // Turn off "Use Current Location" when user manually searches for a city
                 dataStoreManager.setUseCurrentLocation(false)
             } ?: run {
@@ -168,7 +174,12 @@ class WeatherViewModel(
 
                 .addOnSuccessListener { location: Location? ->
                     location?.let {
-                        fetchWeatherData(it.latitude, it.longitude)
+                        fetchWeatherData(
+                            latitude = it.latitude,
+                            longitude = it.longitude,
+                            cityName = "Current Location",
+                            country = ""
+                        )
                     }
                 }
 
@@ -181,7 +192,12 @@ class WeatherViewModel(
         }
     }
 
-    private fun fetchWeatherData(latitude: Double, longitude: Double) {
+    private fun fetchWeatherData(
+        latitude: Double,
+        longitude: Double,
+        cityName: String = "Current Location",
+        country: String = ""
+    ) {
         _weatherState.value = _weatherState.value.copy(
             isLoading = true,
             error = null
@@ -190,21 +206,42 @@ class WeatherViewModel(
         viewModelScope.launch {
             getWeatherUseCase(latitude, longitude)
                 .onSuccess { response ->
-                    val dailyForecast = processForestIntoDaily(response)
-                    val hourlyForecast = processForestIntoHourly(response)
+                    // Open-Meteo already provides daily forecasts directly
+                    val dailyForecast = response.daily.take(7)
+
+                    // Get hourly forecasts from the list (already processed by mapper)
+                    val hourlyForecast = processHourlyForecasts(response.list)
+
                     val score = dailyForecast.map { forecast ->
-                        forecast to calculateBikeRidingScoreUseCase(forecast)
+                        forecast to calculateBikeRidingScoreUseCase(forecast, showNumericValues = false)
+                    }
+
+                    val hourlyScore = hourlyForecast.map { forecast ->
+                        forecast to calculateBikeRidingScoreUseCase(forecast, showNumericValues = true)
                     }
                     _dailyScores.value = score
+                    _hourlyScores.value = hourlyScore
+
+                    // Update city name and country in response
+                    val updatedResponse = response.copy(
+                        city = response.city.copy(
+                            name = cityName,
+                            country = country
+                        )
+                    )
+
                     _weatherState.value = _weatherState.value.copy(
                         isLoading = false,
-                        weatherData = response.copy(daily = dailyForecast),
+                        weatherData = updatedResponse,
                         hourlyForecasts = hourlyForecast,
                         error = null
                     )
 
+                    Log.i(TAG, "Weather data fetched successfully for $cityName, $country")
+                    Log.i(TAG, "Daily forecasts: ${dailyForecast.size}, Hourly forecasts: ${hourlyForecast.size}")
                 }
                 .onFailure { exception ->
+                    Log.e(TAG, "Failed to fetch weather data", exception)
                     _weatherState.value = _weatherState.value.copy(
                         isLoading = false,
                         error = "Failed to fetch weather data: ${exception.message}"
@@ -213,72 +250,25 @@ class WeatherViewModel(
         }
     }
 
-    private fun processForestIntoHourly(response: WeatherResponse): List<HourlyForecast> {
-        // No grouping needed - each API item is already a 3-hour forecast
-        // Just map each item directly to an HourlyForecast
-        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-
-        return response.list.take(12).map { forecastItem ->
-            val formattedTime = timeFormat.format(forecastItem.date * 1000)
-            Log.d(TAG, "Hourly: $formattedTime | Temp: ${forecastItem.main.temp}° | Weather: ${forecastItem.weather.firstOrNull()?.main} | Humidity: ${forecastItem.main.humidity}%")
-
-            HourlyForecast(
-                date = forecastItem.date,
-                temperature = forecastItem.main.temp,
-                weather = forecastItem.weather,
-                humidity = forecastItem.main.humidity,
-                windSpeed = forecastItem.wind.speed,
-                precipitationPredictability = forecastItem.precipitationPredictability
+    private fun processHourlyForecasts(weatherItems: List<WeatherItem>): List<Forecast> {
+       val formatTime = SimpleDateFormat("HH:mm", Locale.getDefault())
+        // Take next 24 hours of forecasts
+        return weatherItems.take(24).map { item ->
+            val formattedTime = formatTime.format(item.date*1000)
+            Forecast(
+                date = item.date,
+                temperature = Temperature(
+                    min = item.main.temp,
+                    max = item.main.temp
+                ),
+                weather = item.weather,
+                humidity = item.main.humidity,
+                windSpeed = item.wind.speed,
+                precipitationPredictability = item.precipitationPredictability
             )
         }.also {
-            Log.i(TAG, "Total hourly forecasts processed: ${it.size}")
+            Log.i(TAG, "Processed ${it.size} hourly forecasts")
         }
-    }
-
-    private fun processForestIntoDaily(response: WeatherResponse): List<DailyForecast> {
-        val allDayDailyForecasts = mutableListOf<DailyForecast>()
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-
-        //Group forecast items by date string (yyyy-MM-dd)
-        val dailyGroups = response.list.groupBy {
-            dateFormat.format(it.date * 1000)
-        }
-
-        dailyGroups.values.forEach { singleDayForecast ->
-            if (singleDayForecast.isNotEmpty()) {
-                val firstForecast = singleDayForecast.first()
-                val maxTemp = singleDayForecast.maxOf { it.main.tempMax }
-                val minTemp = singleDayForecast.minOf { it.main.tempMin }
-                val avgHumidity = singleDayForecast.map { it.main.humidity }.average().toInt()
-                val avgWindSpeed = singleDayForecast.map { it.wind.speed }.average()
-                val avgPrecipitation =
-                    singleDayForecast.map { it.precipitationPredictability }.average()
-
-                //Get the most common weather condition for the day
-
-                val mostCommonWeather = singleDayForecast
-                    .flatMap { it.weather }
-                    .groupBy { it.main }
-                    .maxByOrNull { it.value.size }
-                    ?.value?.first() ?: firstForecast.weather.first()
-
-                val dailyForecast = DailyForecast(
-                    date = firstForecast.date,
-                    temperature = Temperature(
-                        day = firstForecast.main.temp,
-                        min = minTemp,
-                        max = maxTemp,
-                        night = firstForecast.main.temp
-                    ),
-                    weather = listOf(mostCommonWeather),
-                    humidity = avgHumidity,
-                    windSpeed = avgWindSpeed,
-                    precipitationPredictability = avgPrecipitation
-                )
-                allDayDailyForecasts.add(dailyForecast)
-            }
-        }
-        return allDayDailyForecasts.take(6)
     }
 
 

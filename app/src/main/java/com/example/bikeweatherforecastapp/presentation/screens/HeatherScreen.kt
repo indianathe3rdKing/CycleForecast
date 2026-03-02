@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,14 +16,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bikeweatherforecastapp.domain.model.BikeRidingScore
-import com.example.bikeweatherforecastapp.domain.model.DailyForecast
+import com.example.bikeweatherforecastapp.domain.model.Forecast
 import com.example.bikeweatherforecastapp.domain.model.WeatherResponse
-import com.example.bikeweatherforecastapp.presentation.viewmodel.WeatherViewModel
 import com.example.bikeweatherforecastapp.presentation.utils.Utils
 import com.example.bikeweatherforecastapp.ui.theme.CardBackground
 import com.example.bikeweatherforecastapp.ui.theme.CyanAccent
@@ -35,10 +32,10 @@ import com.example.bikeweatherforecastapp.ui.theme.TextTertiary
 @Composable
 fun HeaderSection(
     weatherData: WeatherResponse,
-    bestForecast: DailyForecast?,
+    bestForecast: Forecast?,
     bestScore: BikeRidingScore?,
 
-){
+    ){
     Card(
         elevation = CardDefaults.cardElevation(
             defaultElevation = 12.dp
@@ -58,14 +55,18 @@ fun HeaderSection(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text="🚴 Bike Riding Forest",
-                color=TextPrimary
-                , fontSize = 24.sp,
+                text = "🚴 Bike Riding Forecast",
+                color = TextPrimary,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text="${weatherData.city.name}, ${weatherData.city.country}",
+                text = if (weatherData.city.country.isNotEmpty()) {
+                    "${weatherData.city.name}, ${weatherData.city.country}"
+                } else {
+                    weatherData.city.name
+                },
                 color = TextSecondary,
                 fontSize = 16.sp
             )

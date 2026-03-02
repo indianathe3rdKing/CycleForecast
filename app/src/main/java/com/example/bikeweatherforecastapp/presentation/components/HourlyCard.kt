@@ -10,9 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -24,9 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
 import com.example.bikeweatherforecastapp.domain.model.BikeRidingScore
-import com.example.bikeweatherforecastapp.domain.model.HourlyForecast
+import com.example.bikeweatherforecastapp.domain.model.Forecast
 import com.example.bikeweatherforecastapp.presentation.utils.Utils
 import com.example.bikeweatherforecastapp.presentation.utils.Utils.getScoreColor
 import com.example.bikeweatherforecastapp.ui.theme.CardBackground
@@ -34,7 +30,7 @@ import com.example.bikeweatherforecastapp.ui.theme.TextPrimary
 
 
 @Composable
-fun HourlyCard(score: BikeRidingScore, forecast: HourlyForecast) {
+fun HourlyCard( forecast: Forecast,score: BikeRidingScore) {
 
     val scoreColor = getScoreColor(score.score)
 
@@ -56,7 +52,7 @@ fun HourlyCard(score: BikeRidingScore, forecast: HourlyForecast) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    Utils.formatDate(forecast.date), fontSize = 18.sp,
+                    Utils.formatTime(forecast.date), fontSize = 18.sp,
                     color = TextPrimary,
                     fontWeight = FontWeight.Bold
                 )
@@ -85,25 +81,34 @@ fun HourlyCard(score: BikeRidingScore, forecast: HourlyForecast) {
                 } ?: 120.dp
 
             }
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            // Use Row instead of LazyVerticalGrid to avoid nested scrolling crash
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                items(score.factors) { factor ->
+                score.factors.take(3).forEach { factor ->
                     FactorItem(factor, maxFactorHeight)
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            // Show remaining factors if any
+            if (score.factors.size > 3) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    score.factors.drop(3).forEach { factor ->
+                        FactorItem(factor, maxFactorHeight)
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(score.factors) { factor ->
-                    FactorItem(factor, maxFactorHeight)
-                }
 
-            }
+
         }
     }
 }
