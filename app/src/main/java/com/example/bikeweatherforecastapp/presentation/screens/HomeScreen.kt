@@ -7,13 +7,12 @@ import com.example.bikeweatherforecastapp.presentation.components.WeatherContent
 import com.example.bikeweatherforecastapp.presentation.viewmodel.WeatherViewModel
 
 
-
 @Composable
 fun HomeScreen(weatherData: WeatherResponse, viewModel: WeatherViewModel) {
     val state by viewModel.weatherState
 
     if (state.selectedDay!!) {
-      DailyCastScreen()
+      DailyCastScreen(viewModel)
     }else{
         WeatherContent(weatherData, viewModel)
     }

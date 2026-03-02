@@ -216,7 +216,7 @@ class WeatherViewModel(
     private fun processForestIntoHourly(response: WeatherResponse): List<HourlyForecast> {
         // No grouping needed - each API item is already a 3-hour forecast
         // Just map each item directly to an HourlyForecast
-        val timeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
         return response.list.take(12).map { forecastItem ->
             val formattedTime = timeFormat.format(forecastItem.date * 1000)

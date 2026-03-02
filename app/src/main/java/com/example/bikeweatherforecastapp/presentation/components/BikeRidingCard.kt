@@ -53,7 +53,6 @@ fun BikeRidingCard(
 ) {
     val scoreColor = getScoreColor(score.score)
     val weatherMetric = viewModel.isMetric.collectAsState().value
-    val weatherState by viewModel.weatherState
     val backgroundColor = if (isBest) {
         CardBackgroundBest
     } else {
@@ -156,6 +155,7 @@ fun BikeRidingCard(
                     )
                 }
             }
+
 
             Spacer(modifier = Modifier.height(16.dp))
             //Show factors with better layout
