@@ -1,5 +1,6 @@
 package com.example.bikeweatherforecastapp.presentation.components
 
+import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -16,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
@@ -35,13 +37,14 @@ fun WeatherContent(
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val bestCardVisible = viewModel.bestCardVisibility.collectAsState().value
-
+    val context= LocalContext.current
 
 
 
     BackHandler(enabled = true) {
         keyboardController?.hide()
         focusManager.clearFocus()
+        (context as? Activity)?.finish()
     }
 
     Column(
