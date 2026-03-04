@@ -1,15 +1,21 @@
 package com.example.bikeweatherforecastapp.data.services.notifications
 
-import android.app.Notification
+
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.net.Uri
+import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.core.app.NotificationCompat
 import com.example.bikeweatherforecastapp.R
 import com.example.bikeweatherforecastapp.navigation.MainActivity
+import androidx.core.net.toUri
 
 
 class NotificationHelper(private val context: Context) {
@@ -53,6 +59,23 @@ class NotificationHelper(private val context: Context) {
         notificationManager.notify(1,notification)
 
     }
+    fun batteryOptimization(): Boolean{
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        return powerManager.isIgnoringBatteryOptimizations(context.packageName)
+    }
+
+    fun requestDisableBatteryOptimizations() {
+
+        val intent = Intent(
+            Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+        )
+        intent.data = "package:${context.packageName}".toUri()
+
+        context.startActivity(intent)
+    }
+
+
+
 }
 
 

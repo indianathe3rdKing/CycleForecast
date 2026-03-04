@@ -1,7 +1,11 @@
 package com.example.bikeweatherforecastapp.presentation.screens
 
 import android.Manifest
+import android.app.Application
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -23,10 +27,12 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.example.bikeweatherforecastapp.data.services.notifications.NotificationHelper
 import com.example.bikeweatherforecastapp.domain.model.Setting
 import com.example.bikeweatherforecastapp.presentation.components.SettingsActionItem
 import com.example.bikeweatherforecastapp.presentation.components.SettingsSectionHeader
@@ -53,17 +60,19 @@ import org.koin.androidx.compose.koinViewModel
 import com.example.bikeweatherforecastapp.presentation.components.UnitToggleButton
 import com.example.bikeweatherforecastapp.ui.theme.Success
 import kotlin.contracts.contract
+import androidx.core.net.toUri
 
 
 @Composable
 fun SettingsScreen(viewModel: WeatherViewModel = koinViewModel()) {
     // State for toggle settings
-
+    val context = viewModel.getApplication<Application>()
     val isMetricUnit = viewModel.isMetric.collectAsState().value
     val useCurrentLocation = viewModel.useCurrentLocation.collectAsState().value
     val savedCity = viewModel.savedCity.collectAsState().value
     val bestCardVisibility = viewModel.bestCardVisibility.collectAsState().value
     var notificationsEnabled = viewModel.toggleNotification.collectAsState().value
+    val showBatteryOptimizationDialog by viewModel.showBatteryOptimizationDialog
 
     val scrollState = rememberScrollState()
 
@@ -77,6 +86,38 @@ fun SettingsScreen(viewModel: WeatherViewModel = koinViewModel()) {
         }else{
             notificationsEnabled=false
         }
+    }
+
+    // Battery Optimization Dialog
+    if (showBatteryOptimizationDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissBatteryOptimizationDialog() },
+            title = { Text("Permission Required") },
+            text = {
+                Text("To ensure full functionality, please allow Bike Weather Forecast to run without battery restrictions.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.dismissBatteryOptimizationDialog()
+                        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                            data = "package:${context.packageName}".toUri()
+                            flags= Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        context.startActivity(intent)
+                    }
+                ) {
+                    Text("Open Settings")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { viewModel.dismissBatteryOptimizationDialog() }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     Column(
@@ -223,6 +264,10 @@ fun SettingsScreen(viewModel: WeatherViewModel = koinViewModel()) {
             onCheckedChange = { enabled->
 
                 if (enabled){
+                if(!NotificationHelper(context).batteryOptimization()){
+                    viewModel.requestIgnoreBatteryOptimization(context)
+
+                }else{
                     if(
                         ContextCompat.checkSelfPermission(
                             viewModel.getApplication(),
@@ -237,7 +282,7 @@ fun SettingsScreen(viewModel: WeatherViewModel = koinViewModel()) {
                         )
 
                     }
-                }else{
+                }}else{
                     viewModel.updateNotificationToggle(false)
                     viewModel.disableNotifications()
                 }

@@ -79,6 +79,9 @@ class WeatherViewModel(
             initialValue = dataStoreManager.getBestCardVisibilitySync()
         )
 
+    // Battery optimization dialog trigger
+    private val _showBatteryOptimizationDialog = mutableStateOf(false)
+    val showBatteryOptimizationDialog: State<Boolean> = _showBatteryOptimizationDialog
 
     //location
     private val fusedLocationClient: FusedLocationProviderClient = LocationServices
@@ -346,7 +349,17 @@ class WeatherViewModel(
         return date1 == date2
     }
 
+    fun requestIgnoreBatteryOptimization(context: Context) {
+        if (!NotificationHelper(context).batteryOptimization()) {
+            _showBatteryOptimizationDialog.value = true
+        }
+    }
 
+    fun dismissBatteryOptimizationDialog() {
+        _showBatteryOptimizationDialog.value = false
+    }
+
+    companion object {
+        private const val TAG = "WeatherViewModel"
+    }
 }
-
-private const val TAG = "WeatherViewModel"
