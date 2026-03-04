@@ -2,6 +2,10 @@ package com.example.bikeweatherforecastapp.presentation.components
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -12,9 +16,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -38,13 +45,17 @@ fun WeatherContent(
     val keyboardController = LocalSoftwareKeyboardController.current
     val bestCardVisible = viewModel.bestCardVisibility.collectAsState().value
     val context= LocalContext.current
-
+    var visible by remember { mutableStateOf(false) }
 
 
     BackHandler(enabled = true) {
         keyboardController?.hide()
         focusManager.clearFocus()
         (context as? Activity)?.finish()
+    }
+
+    LaunchedEffect(Unit) {
+        visible= true
     }
 
     Column(
@@ -60,7 +71,11 @@ fun WeatherContent(
         horizontalAlignment = Alignment.CenterHorizontally
 
     ) {
-        SearchInput(viewModel)
+        AnimatedVisibility(
+            visible=visible,
+            enter = fadeIn()+ slideInVertically(initialOffsetY = {-300})
+        ) {
+        SearchInput(viewModel)}
         if (bestCardVisible) HeaderSection(weatherData, bestDay?.first, bestDay?.second)
         LazyColumn(
             modifier = Modifier
@@ -73,6 +88,11 @@ fun WeatherContent(
             )
         ) {
             items(dailyScores) { (forecast, score) ->
+                AnimatedVisibility(
+                    visible = visible,
+                    enter =
+                        fadeIn()+ slideInHorizontally(initialOffsetX = {-300})
+                ) {
                 BikeRidingCard(
                     forecast = forecast,
                     score = score,
@@ -80,7 +100,7 @@ fun WeatherContent(
                     onClick = { selectedDate ->
                         viewModel.setSelectedDayDate(selectedDate)
                     }
-                )
+                )}
             }
         }
     }

@@ -8,6 +8,9 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -73,6 +76,8 @@ fun SettingsScreen(viewModel: WeatherViewModel = koinViewModel()) {
     val bestCardVisibility = viewModel.bestCardVisibility.collectAsState().value
     var notificationsEnabled = viewModel.toggleNotification.collectAsState().value
     val showBatteryOptimizationDialog by viewModel.showBatteryOptimizationDialog
+    var visible by remember { mutableStateOf(false) }
+
 
     val scrollState = rememberScrollState()
 
@@ -120,6 +125,15 @@ fun SettingsScreen(viewModel: WeatherViewModel = koinViewModel()) {
         )
     }
 
+    LaunchedEffect(Unit) {
+        visible = true
+    }
+
+
+    AnimatedVisibility(
+        visible=visible,
+        enter = fadeIn()+ slideInHorizontally(initialOffsetX = {300})
+    ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -327,7 +341,7 @@ fun SettingsScreen(viewModel: WeatherViewModel = koinViewModel()) {
         )
 
         Spacer(modifier = Modifier.height(48.dp))
-    }
+    }}
 }
 
 
