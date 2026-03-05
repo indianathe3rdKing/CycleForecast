@@ -240,7 +240,7 @@ class WeatherViewModel(
 
     fun enableNotifications(){
         val request = PeriodicWorkRequestBuilder<NotificationWorker>(
-            15, TimeUnit.MINUTES
+            12, TimeUnit.HOURS
         ).build()
 
         WorkManager.getInstance(getApplication()).enqueueUniquePeriodicWork("daily_notification",

@@ -25,7 +25,7 @@ class NotificationHelper(private val context: Context) {
     }
     fun showNotification() {
         val title = "Are you riding today?"
-        val message = "Weather conditions look ideal for cycling today."
+        val message = "Check out the weather forecast for today!"
         val importance = NotificationManager.IMPORTANCE_DEFAULT
         val intent = Intent(context, MainActivity::class.java).apply {
             flags= Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
