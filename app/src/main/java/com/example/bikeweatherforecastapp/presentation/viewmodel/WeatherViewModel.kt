@@ -339,7 +339,7 @@ class WeatherViewModel(
                         401 -> "Unauthorized"
                         404 -> "Not Found"
                         429->"Too many requests. Try again later."
-                        500-> "Weather sevrice unavailable"
+                        500-> "Weather service unavailable"
                         else -> "Unknown Error"
                     }
                     _weatherState.value = _weatherState.value.copy(
