@@ -1,4 +1,4 @@
-# 🚴‍♂️ Bike Weather Forecast App
+# 🚴‍♂️ CycleForecast
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple.svg)](https://kotlinlang.org)
 [![Android](https://img.shields.io/badge/Android-13+-green.svg)](https://developer.android.com)
@@ -9,7 +9,7 @@ A modern Android weather application designed specifically for cyclists, providi
 
 ## 📱 Overview
 
-Bike Weather Forecast App helps cyclists plan their rides by analyzing weather conditions and providing a comprehensive bike riding score. The app evaluates temperature, wind speed, humidity, weather conditions, precipitation, visibility, and UV index to determine the best times for cycling.
+CycleForecast helps cyclists plan their rides by analyzing weather conditions and providing a comprehensive bike riding score. The app evaluates temperature, wind speed, humidity, weather conditions, precipitation, visibility, and UV index to determine the best times for cycling.
 
 ## 📸 Screenshots
 
@@ -184,8 +184,8 @@ app/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/indianathe3rdKing/Bike-Weather-Forecast-App.git
-   cd Bike-Weather-Forecast-App
+   git clone https://github.com/indianathe3rdKing/CycleForecast.git
+   cd CycleForecast
    ```
 
 2. **Build the project**
@@ -240,13 +240,13 @@ You can configure API endpoints in `data/remote/Config.kt`.
 The bike riding score (0-100) is calculated using a weighted formula:
 
 ```kotlin
-score = (temperature × 0.20) + 
-        (wind × 0.18) + 
-        (humidity × 0.15) + 
-        (weather × 0.25) + 
-        (precipitation × 0.15) + 
-        (visibility × 0.04) + 
-        (uvIndex × 0.03)
+score = (temperature * 0.20) +
+        (wind * 0.18) +
+        (humidity * 0.15) +
+        (weather * 0.25) +
+        (precipitation * 0.15) +
+        (visibility * 0.04) +
+        (uvIndex * 0.03)
 ```
 
 ### Score Interpretation
@@ -331,4 +331,3 @@ For questions or support, please open an issue on GitHub.
 ---
 
 **Made with ❤️ for cyclists**
-

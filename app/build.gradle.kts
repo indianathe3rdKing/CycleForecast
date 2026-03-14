@@ -5,7 +5,7 @@ plugins {
 
 android {
 
-    namespace = "com.example.bikeweatherforecastapp"
+    namespace = "com.devbub.cycleforecast"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
 
-        applicationId = "com.example.bikeweatherforecastapp"
+        applicationId = "com.devbub.cycleforecast"
         minSdk = 33
         targetSdk = 36
         versionCode = 1
